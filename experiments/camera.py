@@ -1,126 +1,108 @@
-from __future__ import annotations
 import cv2
-from typing import Optional
-from PIL import Image
-import io
-import numpy as np
+import threading
 import time
+from flask import Flask, Response, render_template
 
-class Camera:
-    def __init__(
-        self,
-        src: int | str = 0,
-        width: int = 640,
-        height: int = 480,
-        fps: int = 20,
-        jpeg_quality: int = 85,
-        expose_error_logs: bool = True,
-    ):
-        """
-        Initialize the camera capture.
+app = Flask(__name__)
 
-        Parameters:
-        - src: Video source (default 0 for the primary webcam, or a path/URL)
-        - width, height: Desired frame size
-        - fps: Desired frames per second
-        - jpeg_quality: JPEG quality (1-95)
-        - expose_error_logs: Whether to print verbose error logs
-        """
-        self.src = src
-        self.cap = cv2.VideoCapture(src)
-        self.expose_error_logs = expose_error_logs
+# Настройки
+CAMERA_INDEX = 0            # 0 за вградена/първа камера, или rtsp/ваш поток
+FRAME_WIDTH = 640
+FRAME_HEIGHT = 480
+FPS = 20
 
-        if not self.cap.isOpened():
-            raise RuntimeError(f"Failed to open video source {src}")
+# Споделени променливи
+output_frame = None
+lock = threading.Lock()
+motion_detected = False
 
-        # Apply desired properties
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-        self.cap.set(cv2.CAP_PROP_FPS, fps)
+def camera_thread(src=CAMERA_INDEX):
+    global output_frame, motion_detected
+    cap = cv2.VideoCapture(src)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT)
+    cap.set(cv2.CAP_PROP_FPS, FPS)
 
-        self.width = int(width)
-        self.height = int(height)
-        self.fps = int(fps)
-        self.jpeg_quality = int(jpeg_quality)
+    # Първи кадър за сравнение
+    ret, prev = cap.read()
+    if not ret:
+        print("Не може да отвори камера/поток:", src)
+        return
+    prev_gray = cv2.cvtColor(prev, cv2.COLOR_BGR2GRAY)
+    prev_gray = cv2.GaussianBlur(prev_gray, (21, 21), 0)
 
-        # Small sanity check to ensure properties took effect
-        actual_w = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        actual_h = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        if actual_w != self.width or actual_h != self.height:
-            if self.expose_error_logs:
-                print(f"Warning: Requested size ({self.width}x{self.height}) "
-                      f"not supported by device. Got ({actual_w}x{actual_h}).")
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            # пауза и опит за повторно свързване
+            time.sleep(0.5)
+            continue
 
-        # Time tracking for fps control if needed
-        self._last_frame_time = time.time()
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        gray = cv2.GaussianBlur(gray, (21, 21), 0)
 
-    def __enter__(self) -> "Camera":
-        return self
+        # Разлика между кадри
+        frame_delta = cv2.absdiff(prev_gray, gray)
+        thresh = cv2.threshold(frame_delta, 25, 255, cv2.THRESH_BINARY)[1]
+        thresh = cv2.dilate(thresh, None, iterations=2)
 
-    def __exit__(self, exc_type, exc, tb) -> None:
-        self.release()
+        # Намираме контури (движение)
+        contours, _ = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        motion = False
+        for c in contours:
+            if cv2.contourArea(c) < 500:  # праг за минимална площ
+                continue
+            (x, y, w, h) = cv2.boundingRect(c)
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            motion = True
 
-    def is_open(self) -> bool:
-        """Return whether the underlying capture is opened."""
-        return self.cap.isOpened()
+        motion_detected = motion
 
-    def read_frame_jpeg(self, jpeg_quality: Optional[int] = None) -> Optional[bytes]:
-        """
-        Read a frame, convert to JPEG, and return bytes.
+        # Добавяме текст на кадъра
+        status_text = "Motion" if motion else "No Motion"
+        cv2.putText(frame, status_text, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6,
+                    (0, 0, 255) if motion else (0, 255, 0), 2)
 
-        Uses BGR->RGB conversion, then saves as JPEG in memory.
+        # Запазваме настоящия кадър като output_frame (JPEG)
+        with lock:
+            output_frame = frame.copy()
 
-        Parameters:
-        - jpeg_quality: Optional override for JPEG quality (1-95). If None, uses self.jpeg_quality.
+        # Настоящия кадър става предишен
+        prev_gray = gray
 
-        Returns:
-        - JPEG bytes if frame read successfully, else None.
-        """
-        success, frame = self.cap.read()
-        if not success or frame is None:
-            if self.expose_error_logs:
-                print("Warning: Failed to read frame from camera.")
-            return None
+        # регулируем fps
+        time.sleep(1.0 / FPS)
 
-        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        pil_img = Image.fromarray(rgb)
+    cap.release()
 
-        quality = int(jpeg_quality) if jpeg_quality is not None else self.jpeg_quality
-        quality = max(1, min(95, quality))
+    def generate_mjpeg():
+        global output_frame
+        while True:
+            with lock:
+                if output_frame is None:
+                    continue
+                # Кодираме кадъра в JPEG
+                ret, jpeg = cv2.imencode('.jpg', output_frame)
+                if not ret:
+                    continue
+                frame_bytes = jpeg.tobytes()
 
-        buf = io.BytesIO()
-        pil_img.save(buf, format="JPEG", quality=quality)
-        return buf.getvalue()
+            # MJPEG рамка
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+            time.sleep(0.001)
 
-    def read_frame_rgb(self) -> Optional[np.ndarray]:
-        """
-        Read a frame and return as a NumPy RGB array (height, width, 3) with dtype uint8.
+    @app.route('/video_feed')
+    def video_feed():
+        return Response(generate_mjpeg(),
+                        mimetype='multipart/x-mixed-replace; boundary=frame')
 
-        Returns:
-        - RGB numpy array if frame read successfully, else None.
-        """
-        success, frame = self.cap.read()
-        if not success or frame is None:
-            if self.expose_error_logs:
-                print("Warning: Failed to read frame from camera.")
-            return None
+    @app.route('/')
+    def index():
+        # шаблонът показва img към /video_feed и индикация за движение (чрез AJAX)
+        return render_template('index.html')
 
-        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        return rgb
-
-    def release(self) -> None:
-        """Release the underlying video capture."""
-        if hasattr(self, "cap") and self.cap is not None:
-            if self.cap.isOpened():
-                self.cap.release()
-                if self.expose_error_logs:
-                    print("Camera released.")
-
-    # Optional: friendly short-circuit for quick use
-    def grab(self) -> bool:
-        """Capture a frame without processing, return True if frame was grabbed."""
-        if not self.cap.isOpened():
-            if self.expose_error_logs:
-                print("Camera is not opened.")
-            return False
-        return self.cap.grab()
+    @app.route('/motion_status')
+    def motion_status():
+        # връща прост текст (може да е JSON)
+        return ("1" if motion_detected else "0"), 200, {'Content-Type': 'text/plain'}
