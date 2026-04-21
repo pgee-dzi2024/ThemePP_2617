@@ -1,0 +1,20 @@
+{% extends "main/base.html" %}
+
+{% block title %}Изтриване на камера | Система за видео наблюдение{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card card-shadow p-4">
+            <h1 class="h3 fw-bold mb-3">Изтриване на камера</h1>
+            <p>Сигурен ли си, че искаш да изтриеш <strong>{{ camera.name }}</strong>?</p>
+
+            <form method="post">
+                {% csrf_token %}
+                <button class="btn btn-danger" type="submit">Да, изтрий</button>
+                <a href="{% url 'camera_list' %}" class="btn btn-outline-secondary">Отказ</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

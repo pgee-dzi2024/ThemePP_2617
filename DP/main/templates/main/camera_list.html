@@ -1,0 +1,66 @@
+{% extends "main/base.html" %}
+
+{% block title %}Камери | Система за видео наблюдение{% endblock %}
+
+{% block content %}
+<div class="card card-shadow p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h3 fw-bold mb-1">Видео източници</h1>
+            <p class="text-muted mb-0">Преглед и управление на локални и IP камери.</p>
+        </div>
+        <div>
+            <a href="{% url 'camera_create' %}" class="btn btn-primary">Добави камера</a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+            <tr>
+                <th>Име</th>
+                <th>Тип</th>
+                <th>URL / Device</th>
+                <th>Праг</th>
+                <th>Площ</th>
+                <th>Активна</th>
+                <th>Действия</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for camera in cameras %}
+                <tr>
+                    <td class="fw-semibold">{{ camera.name }}</td>
+                    <td>{{ camera.get_source_type_display }}</td>
+                    <td>
+                        {% if camera.source_type == "ip" %}
+                            {{ camera.stream_url|default:"-" }}
+                        {% else %}
+                            {{ camera.device_index }}
+                        {% endif %}
+                    </td>
+                    <td>{{ camera.sensitivity_threshold }}</td>
+                    <td>{{ camera.min_area }}</td>
+                    <td>
+                        {% if camera.is_active %}
+                            <span class="badge text-bg-success">Да</span>
+                        {% else %}
+                            <span class="badge text-bg-secondary">Не</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'camera_status' camera.pk %}" class="btn btn-sm btn-success">Live</a>
+                        <a href="{% url 'camera_edit' camera.pk %}" class="btn btn-sm btn-outline-primary">Редакция</a>
+                        <a href="{% url 'camera_delete' camera.pk %}" class="btn btn-sm btn-outline-danger">Изтриване</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="7" class="text-muted">Няма добавени камери.</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

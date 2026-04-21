@@ -1,0 +1,71 @@
+{% extends "main/base.html" %}
+
+{% block title %}Статус на камера | Система за видео наблюдение{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-12">
+        <div class="card card-shadow p-4">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                <div>
+                    <h1 class="h3 fw-bold mb-1">{{ camera.name }}</h1>
+                    <p class="text-muted mb-0">Live stream и текущ статус на видео източника.</p>
+                </div>
+                <div>
+                    <a href="{% url 'camera_list' %}" class="btn btn-outline-secondary">Назад</a>
+                    <a href="{% url 'camera_start' camera.pk %}" class="btn btn-success">Start</a>
+                    <a href="{% url 'camera_stop' camera.pk %}" class="btn btn-danger">Stop</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card card-shadow p-4 h-100">
+            <h5 class="section-title">Свързаност</h5>
+            {% if status.connected %}
+                <span class="badge text-bg-success badge-status">Connected</span>
+            {% else %}
+                <span class="badge text-bg-danger badge-status">Disconnected</span>
+            {% endif %}
+
+            {% if status.error %}
+                <div class="alert alert-danger mt-3 mb-0">
+                    {{ status.error }}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card card-shadow p-4 h-100">
+            <h5 class="section-title">Технически данни</h5>
+            <div><strong>FPS:</strong> {{ status.fps|floatformat:2 }}</div>
+            <div><strong>Latency:</strong> {{ status.latency_ms|floatformat:2 }} ms</div>
+            <div><strong>Active:</strong> {% if camera.is_active %}Да{% else %}Не{% endif %}</div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card card-shadow p-4 h-100">
+            <h5 class="section-title">Настройки</h5>
+            <div><strong>Праг:</strong> {{ camera.sensitivity_threshold }}</div>
+            <div><strong>Минимална площ:</strong> {{ camera.min_area }}</div>
+            <div><strong>Тип:</strong> {{ camera.get_source_type_display }}</div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="card card-shadow p-4">
+            <h5 class="section-title">Live stream</h5>
+            {% if status.connected %}
+                <img src="{% url 'camera_stream' camera.pk %}" alt="Live stream" class="img-fluid rounded border">
+            {% else %}
+                <div class="alert alert-warning mb-0">
+                    Няма активен stream. Провери камерата, URL-а или device index.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
