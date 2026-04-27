@@ -1,10 +1,106 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-<h1>Свали си html шаблон!</h1>
-</body>
-</html>
+{% extends "main/base.html" %}
+
+{% block title %}Начало | Система за видео наблюдение{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-12">
+        <div class="card card-shadow p-4">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="display-6 fw-bold mb-3">Система за видео наблюдение през уеб</h1>
+                    <p class="lead mb-4">
+                        Django приложение за конфигуриране на видео източници, live streaming, детекция на движение и лог на събития.
+                    </p>
+                    <a href="{% url 'camera_list' %}" class="btn btn-primary me-2">Преглед на камерите</a>
+                    <a href="{% url 'camera_create' %}" class="btn btn-outline-primary">Добави камера</a>
+                </div>
+                <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+                    {% if camera %}
+                        <span class="badge text-bg-success badge-status">Connected</span>
+                    {% else %}
+                        <span class="badge text-bg-danger badge-status">Disconnected</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card card-shadow p-4 h-100">
+            <h5 class="section-title">Общо камери</h5>
+            <div class="display-5 fw-bold">{{ camera_count }}</div>
+            <p class="text-muted mb-0">Всички записани видео източници в системата.</p>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card card-shadow p-4 h-100">
+            <h5 class="section-title">Активни камери</h5>
+            <div class="display-5 fw-bold">{{ active_camera_count }}</div>
+            <p class="text-muted mb-0">Камери, маркирани като активни за наблюдение.</p>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card card-shadow p-4 h-100">
+            <h5 class="section-title">Текущ статус</h5>
+            {% if status and status.connected %}
+                <div class="text-success fw-bold mb-2">Connected</div>
+                <div><strong>FPS:</strong> {{ status.fps|floatformat:2 }}</div>
+                <div><strong>Latency:</strong> {{ status.latency_ms|floatformat:2 }} ms</div>
+            {% elif camera %}
+                <div class="text-danger fw-bold mb-2">Disconnected</div>
+                <div class="text-muted">{{ status.error }}</div>
+            {% else %}
+                <div class="text-muted">Няма избрана камера.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card card-shadow p-4 h-100">
+            <h5 class="section-title">Бързи действия</h5>
+            <div class="d-grid gap-2">
+                <a href="{% url 'camera_list' %}" class="btn btn-outline-dark">Управление на камери</a>
+                <a href="{% url 'camera_create' %}" class="btn btn-outline-primary">Добавяне на нов източник</a>
+                {% if camera %}
+                    <a href="{% url 'camera_status' camera.pk %}" class="btn btn-success">Отвори live stream</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card card-shadow p-4 h-100">
+            <h5 class="section-title">Последни събития</h5>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead>
+                    <tr>
+                        <th>Камера</th>
+                        <th>Дата/час</th>
+                        <th>Събитие</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for event in latest_events %}
+                        <tr>
+                            <td>{{ event.camera.name }}</td>
+                            <td>{{ event.detected_at|date:"d.m.Y H:i:s" }}</td>
+                            <td>
+                                <span class="badge text-bg-warning">Motion</span>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-muted">Няма записани събития.</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

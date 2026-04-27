@@ -1,0 +1,11 @@
+Важно за тестване
+
+Локална уеб камера
+Ако използваш локална камера:
+source_type = local
+device_index = 0
+
+IP камера / stream URL
+Ако използваш IP камера:
+source_type = ip
+stream_url = ...

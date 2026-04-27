@@ -1,0 +1,60 @@
+{% extends "main/base.html" %}
+
+{% block title %}Лог на събития | Система за видео наблюдение{% endblock %}
+
+{% block content %}
+<div class="card card-shadow p-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+            <h1 class="h3 fw-bold mb-1">Лог на събитията</h1>
+            <p class="text-muted mb-0">Списък на събитията „движение засечено“ с дата и час.</p>
+        </div>
+        <a href="{% url 'home' %}" class="btn btn-outline-secondary">Начало</a>
+    </div>
+
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-6">
+            <label class="form-label">Филтър по камера</label>
+            <select name="camera" class="form-select">
+                <option value="">Всички камери</option>
+                {% for camera in cameras %}
+                    <option value="{{ camera.id }}" {% if selected_camera_id == camera.id|stringformat:"s" %}selected{% endif %}>
+                        {{ camera.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-6 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary me-2">Филтрирай</button>
+            <a href="{% url 'motion_event_list' %}" class="btn btn-outline-secondary">Изчисти</a>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+            <tr>
+                <th>Камера</th>
+                <th>Дата/час</th>
+                <th>Съобщение</th>
+                <th>Frame</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for event in events %}
+                <tr>
+                    <td class="fw-semibold">{{ event.camera.name }}</td>
+                    <td>{{ event.detected_at|date:"d.m.Y H:i:s" }}</td>
+                    <td>{{ event.message }}</td>
+                    <td>{{ event.frame_path|default:"-" }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4" class="text-muted">Няма събития.</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

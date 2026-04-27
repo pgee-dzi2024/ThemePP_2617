@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: 127.0.0.1
--- Време на генериране: 11 фев 2026 в 09:53
+-- Време на генериране: 22 апр 2026 в 01:10
 -- Версия на сървъра: 10.4.32-MariaDB
 -- Версия на PHP: 8.2.12
 
@@ -85,7 +85,15 @@ INSERT INTO `auth_permission` (`id`, `name`, `content_type_id`, `codename`) VALU
 (21, 'Can add session', 6, 'add_session'),
 (22, 'Can change session', 6, 'change_session'),
 (23, 'Can delete session', 6, 'delete_session'),
-(24, 'Can view session', 6, 'view_session');
+(24, 'Can view session', 6, 'view_session'),
+(25, 'Can add Събитие при движение', 7, 'add_motionevent'),
+(26, 'Can change Събитие при движение', 7, 'change_motionevent'),
+(27, 'Can delete Събитие при движение', 7, 'delete_motionevent'),
+(28, 'Can view Събитие при движение', 7, 'view_motionevent'),
+(29, 'Can add Видео източник', 8, 'add_camerasource'),
+(30, 'Can change Видео източник', 8, 'change_camerasource'),
+(31, 'Can delete Видео източник', 8, 'delete_camerasource'),
+(32, 'Can view Видео източник', 8, 'view_camerasource');
 
 -- --------------------------------------------------------
 
@@ -112,7 +120,7 @@ CREATE TABLE `auth_user` (
 --
 
 INSERT INTO `auth_user` (`id`, `password`, `last_login`, `is_superuser`, `username`, `first_name`, `last_name`, `email`, `is_staff`, `is_active`, `date_joined`) VALUES
-(1, 'pbkdf2_sha256$600000$64dZkuOCugCzPnKydWuWeq$ubcqT5zU7+/kQKodi+lJ7bpDnf4SJ5hnNITrv7XjrqY=', NULL, 1, 'user_26', '', '', '', 1, 1, '2026-02-11 08:47:57.603297');
+(1, 'pbkdf2_sha256$600000$64dZkuOCugCzPnKydWuWeq$ubcqT5zU7+/kQKodi+lJ7bpDnf4SJ5hnNITrv7XjrqY=', '2026-04-21 21:56:34.563282', 1, 'user_26', '', '', '', 1, 1, '2026-02-11 08:47:57.603297');
 
 -- --------------------------------------------------------
 
@@ -177,6 +185,8 @@ INSERT INTO `django_content_type` (`id`, `app_label`, `model`) VALUES
 (2, 'auth', 'permission'),
 (4, 'auth', 'user'),
 (5, 'contenttypes', 'contenttype'),
+(8, 'main', 'camerasource'),
+(7, 'main', 'motionevent'),
 (6, 'sessions', 'session');
 
 -- --------------------------------------------------------
@@ -214,7 +224,9 @@ INSERT INTO `django_migrations` (`id`, `app`, `name`, `applied`) VALUES
 (15, 'auth', '0010_alter_group_name_max_length', '2026-02-11 08:47:25.868378'),
 (16, 'auth', '0011_update_proxy_permissions', '2026-02-11 08:47:25.890726'),
 (17, 'auth', '0012_alter_user_first_name_max_length', '2026-02-11 08:47:25.920362'),
-(18, 'sessions', '0001_initial', '2026-02-11 08:47:25.982333');
+(18, 'sessions', '0001_initial', '2026-02-11 08:47:25.982333'),
+(19, 'main', '0001_initial', '2026-04-21 21:55:26.091295'),
+(20, 'main', '0002_alter_camerasource_stream_url', '2026-04-21 23:03:17.105991');
 
 -- --------------------------------------------------------
 
@@ -227,6 +239,111 @@ CREATE TABLE `django_session` (
   `session_data` longtext NOT NULL,
   `expire_date` datetime(6) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Схема на данните от таблица `django_session`
+--
+
+INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES
+('irijic8mmzgttk8ot4lql2w8bzjoenp2', '.eJxVjMsOwiAQRf-FtSFI5TEu3fcbyAwMUjWQlHZl_HfbpAvdnnPufYuA61LC2nkOUxJXcRanX0YYn1x3kR5Y703GVpd5Irkn8rBdji3x63a0fwcFe9nWdgAw1qIDMmA4X5T2GYjAJgaK1nnSaFilgUBtEF220YAHNNolyuLzBdg_OAs:1wFJ58:f4uD7dsqW1Xz4nToHwN0eWxGCO3EHd88bFTFYbFZJqo', '2026-05-05 21:56:34.565826');
+
+-- --------------------------------------------------------
+
+--
+-- Структура на таблица `main_camerasource`
+--
+
+CREATE TABLE `main_camerasource` (
+  `id` bigint(20) NOT NULL,
+  `name` varchar(120) NOT NULL,
+  `source_type` varchar(20) NOT NULL,
+  `stream_url` varchar(500) DEFAULT NULL,
+  `device_index` int(10) UNSIGNED NOT NULL CHECK (`device_index` >= 0),
+  `is_active` tinyint(1) NOT NULL,
+  `sensitivity_threshold` int(10) UNSIGNED NOT NULL CHECK (`sensitivity_threshold` >= 0),
+  `min_area` int(10) UNSIGNED NOT NULL CHECK (`min_area` >= 0),
+  `created_at` datetime(6) NOT NULL,
+  `updated_at` datetime(6) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Схема на данните от таблица `main_camerasource`
+--
+
+INSERT INTO `main_camerasource` (`id`, `name`, `source_type`, `stream_url`, `device_index`, `is_active`, `sensitivity_threshold`, `min_area`, `created_at`, `updated_at`) VALUES
+(1, 'камера 1', 'ip', 'rtsp://admin:gimas1613@192.168.100.110:554/cam/realmonitor?channel=1&subtype=0', 0, 1, 25, 500, '2026-04-21 22:23:23.347572', '2026-04-21 23:05:25.558523');
+
+-- --------------------------------------------------------
+
+--
+-- Структура на таблица `main_motionevent`
+--
+
+CREATE TABLE `main_motionevent` (
+  `id` bigint(20) NOT NULL,
+  `detected_at` datetime(6) NOT NULL,
+  `message` varchar(255) NOT NULL,
+  `frame_path` varchar(255) DEFAULT NULL,
+  `camera_id` bigint(20) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Схема на данните от таблица `main_motionevent`
+--
+
+INSERT INTO `main_motionevent` (`id`, `detected_at`, `message`, `frame_path`, `camera_id`) VALUES
+(1, '2026-04-21 23:03:57.811706', 'Движение засечено', NULL, 1),
+(2, '2026-04-21 23:04:00.014272', 'Движение засечено', NULL, 1),
+(3, '2026-04-21 23:04:02.023837', 'Движение засечено', NULL, 1),
+(4, '2026-04-21 23:04:04.086955', 'Движение засечено', NULL, 1),
+(5, '2026-04-21 23:04:06.121189', 'Движение засечено', NULL, 1),
+(6, '2026-04-21 23:04:08.161767', 'Движение засечено', NULL, 1),
+(7, '2026-04-21 23:04:10.206591', 'Движение засечено', NULL, 1),
+(8, '2026-04-21 23:04:13.041990', 'Движение засечено', NULL, 1),
+(9, '2026-04-21 23:04:15.786388', 'Движение засечено', NULL, 1),
+(10, '2026-04-21 23:04:17.943297', 'Движение засечено', NULL, 1),
+(11, '2026-04-21 23:04:20.104531', 'Движение засечено', NULL, 1),
+(12, '2026-04-21 23:04:22.184336', 'Движение засечено', NULL, 1),
+(13, '2026-04-21 23:04:25.108525', 'Движение засечено', NULL, 1),
+(14, '2026-04-21 23:04:27.746909', 'Движение засечено', NULL, 1),
+(15, '2026-04-21 23:04:30.004562', 'Движение засечено', NULL, 1),
+(16, '2026-04-21 23:04:32.051966', 'Движение засечено', NULL, 1),
+(17, '2026-04-21 23:04:34.103760', 'Движение засечено', NULL, 1),
+(18, '2026-04-21 23:04:36.186869', 'Движение засечено', NULL, 1),
+(19, '2026-04-21 23:04:40.410021', 'Движение засечено', NULL, 1),
+(20, '2026-04-21 23:04:43.147008', 'Движение засечено', NULL, 1),
+(21, '2026-04-21 23:04:46.192176', 'Движение засечено', NULL, 1),
+(22, '2026-04-21 23:04:50.067647', 'Движение засечено', NULL, 1),
+(23, '2026-04-21 23:04:54.057441', 'Движение засечено', NULL, 1),
+(24, '2026-04-21 23:04:56.131055', 'Движение засечено', NULL, 1),
+(25, '2026-04-21 23:05:50.598172', 'Движение засечено', NULL, 1),
+(26, '2026-04-21 23:05:53.134217', 'Движение засечено', NULL, 1),
+(27, '2026-04-21 23:05:55.216380', 'Движение засечено', NULL, 1),
+(28, '2026-04-21 23:05:58.213811', 'Движение засечено', NULL, 1),
+(29, '2026-04-21 23:06:01.057064', 'Движение засечено', NULL, 1),
+(30, '2026-04-21 23:06:04.016038', 'Движение засечено', NULL, 1),
+(31, '2026-04-21 23:06:06.172400', 'Движение засечено', NULL, 1),
+(32, '2026-04-21 23:06:10.088318', 'Движение засечено', NULL, 1),
+(33, '2026-04-21 23:06:12.134246', 'Движение засечено', NULL, 1),
+(34, '2026-04-21 23:06:14.202754', 'Движение засечено', NULL, 1),
+(35, '2026-04-21 23:06:17.063407', 'Движение засечено', NULL, 1),
+(36, '2026-04-21 23:06:20.134051', 'Движение засечено', NULL, 1),
+(37, '2026-04-21 23:06:22.203548', 'Движение засечено', NULL, 1),
+(38, '2026-04-21 23:06:25.012861', 'Движение засечено', NULL, 1),
+(39, '2026-04-21 23:06:27.053931', 'Движение засечено', NULL, 1),
+(40, '2026-04-21 23:06:30.123665', 'Движение засечено', NULL, 1),
+(41, '2026-04-21 23:06:32.204968', 'Движение засечено', NULL, 1),
+(42, '2026-04-21 23:06:35.081355', 'Движение засечено', NULL, 1),
+(43, '2026-04-21 23:06:38.082952', 'Движение засечено', NULL, 1),
+(44, '2026-04-21 23:06:40.123048', 'Движение засечено', NULL, 1),
+(45, '2026-04-21 23:06:42.204033', 'Движение засечено', NULL, 1),
+(46, '2026-04-21 23:06:45.032804', 'Движение засечено', NULL, 1),
+(47, '2026-04-21 23:06:47.054771', 'Движение засечено', NULL, 1),
+(48, '2026-04-21 23:06:50.123312', 'Движение засечено', NULL, 1),
+(49, '2026-04-21 23:06:52.163919', 'Движение засечено', NULL, 1),
+(50, '2026-04-21 23:06:54.166083', 'Движение засечено', NULL, 1),
+(51, '2026-04-21 23:06:57.053003', 'Движение засечено', NULL, 1),
+(52, '2026-04-21 23:07:01.861150', 'Движение засечено', NULL, 1);
 
 --
 -- Indexes for dumped tables
@@ -306,6 +423,19 @@ ALTER TABLE `django_session`
   ADD KEY `django_session_expire_date_a5c62663` (`expire_date`);
 
 --
+-- Индекси за таблица `main_camerasource`
+--
+ALTER TABLE `main_camerasource`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Индекси за таблица `main_motionevent`
+--
+ALTER TABLE `main_motionevent`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `main_motionevent_camera_id_372f64f3_fk_main_camerasource_id` (`camera_id`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -325,7 +455,7 @@ ALTER TABLE `auth_group_permissions`
 -- AUTO_INCREMENT for table `auth_permission`
 --
 ALTER TABLE `auth_permission`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT for table `auth_user`
@@ -355,13 +485,25 @@ ALTER TABLE `django_admin_log`
 -- AUTO_INCREMENT for table `django_content_type`
 --
 ALTER TABLE `django_content_type`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `django_migrations`
 --
 ALTER TABLE `django_migrations`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+
+--
+-- AUTO_INCREMENT for table `main_camerasource`
+--
+ALTER TABLE `main_camerasource`
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `main_motionevent`
+--
+ALTER TABLE `main_motionevent`
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
 
 --
 -- Ограничения за дъмпнати таблици
@@ -400,6 +542,12 @@ ALTER TABLE `auth_user_user_permissions`
 ALTER TABLE `django_admin_log`
   ADD CONSTRAINT `django_admin_log_content_type_id_c4bce8eb_fk_django_co` FOREIGN KEY (`content_type_id`) REFERENCES `django_content_type` (`id`),
   ADD CONSTRAINT `django_admin_log_user_id_c564eba6_fk_auth_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_user` (`id`);
+
+--
+-- Ограничения за таблица `main_motionevent`
+--
+ALTER TABLE `main_motionevent`
+  ADD CONSTRAINT `main_motionevent_camera_id_372f64f3_fk_main_camerasource_id` FOREIGN KEY (`camera_id`) REFERENCES `main_camerasource` (`id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

@@ -1,28 +1,101 @@
-# Play - Free Tailwind CSS Template for Startup, Apps and SaaS
+# Система за видео наблюдение през уеб
 
-Play is an open-source and free Tailwind CSS template co-created by TailGrids and UIdeck. This template specially crafted for SaaS, startup, business and software website.
-Play crafted in a way that you can use with almost all sort of web project. This is Tailwind CSS template built using [TailGrids](https://tailgrids.com/) components.
+## Описание на проекта
 
-### This template crafted using 🥞 [TailGrids](https://tailgrids.com/) UI components
+Това е Django приложение за уеб базирано видео наблюдение, което позволява:
+- добавяне и управление на видео източници;
+- използване на локална уеб камера или IP камера / stream URL;
+- показване на live stream в браузъра чрез HTTP streaming;
+- засичане на движение чрез сравнение на последователни кадри;
+- визуално маркиране на движение върху кадъра;
+- запис на събития „движение засечено“ в база данни;
+- преглед на събитията в уеб интерфейс и през REST API;
+- показване на статус на камерата, FPS и latency.
 
-### [🚀 View Demo](https://play-tailwind.tailgrids.com/)
+## Използвани технологии
 
-### [⬇️ Download Now](https://links.tailgrids.com/play-download)
+- Python 3.10
+- Django
+- Django REST Framework
+- OpenCV
+- HTML / CSS
+- Bootstrap 5
 
-[![play-tailwind](https://cdn.tailgrids.com/play-tailwind.jpg)](https://play-tailwind.tailgrids.com/)
+## Основни функционалности
 
-## 📃 License
+### Уеб интерфейс
+- начална страница с dashboard;
+- списък с камери;
+- добавяне, редакция и изтриване на камера;
+- страница за live stream и статус;
+- лог на motion events.
 
-Play is an open-source template, you can use it with your personal or commercial projects without any attribution or backlink.
+### API
+- `GET /api/cameras/`
+- `GET /api/cameras/<id>/`
+- `GET /api/cameras/<id>/status/`
+- `POST /api/cameras/<id>/start/`
+- `POST /api/cameras/<id>/stop/`
+- `GET /api/events/`
 
-## 💙 Support
+## Инсталация и стартиране
 
-You can always support this project by [Starring🌟 This Repository](https://github.com/tailgrids/play-tailwind)
-and sharing with friends. Also open an issue if you find bug or feel free to contribute by pull requests after fixing any issue or adding more values.
+### 3. Инсталиране на пакетите
 
-### Update Logs: 2.0 - Nov 2023
-- Design refresh
-- New marketing section
-- Dark mode support
-- Code and performance optimization
-- Updated dependencies
+### 4. Миграции
+
+### 5. Създаване на администратор
+
+### 6. Стартиране на сървъра
+
+## Използване
+
+1. Отвори началната страница:
+   - `http://127.0.0.1:8000/`
+
+2. Добави камера от:
+   - `http://127.0.0.1:8000/cameras/add/`
+
+3. Прегледай списъка с камери:
+   - `http://127.0.0.1:8000/cameras/`
+
+4. Отвори live stream и статус:
+   - `http://127.0.0.1:8000/cameras/<id>/status/`
+
+5. Прегледай събитията:
+   - `http://127.0.0.1:8000/events/`
+
+## Настройки на камерата
+
+### Локална камера
+- `source_type = local`
+- `device_index = 0`
+
+### IP камера
+- `source_type = ip`
+- `stream_url = http://...`
+
+## Поведение на motion detection
+
+Системата:
+- преобразува кадъра в сиво изображение;
+- прилага Gaussian blur;
+- сравнява последователни кадри;
+- открива разлики над зададен праг;
+- маркира зоните на промяна;
+- записва събитие в базата данни.
+
+## Демонстрация
+
+За защита на проекта може да се покаже:
+- добавяне на камера;
+- отваряне на live stream;
+- симулиране на движение пред камерата;
+- появяване на визуална индикация;
+- запис на събитие в лог;
+- преглед на API резултати.
+
+## Кратка инструкция за демонстрация
+
+### Стъпка 1
+Стартира се приложението.

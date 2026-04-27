@@ -1,0 +1,67 @@
+{% extends "main/base.html" %}
+
+{% block title %}Камера | Система за видео наблюдение{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card card-shadow p-4">
+            <h1 class="h3 fw-bold mb-3">
+                {% if camera %}Редакция на камера{% else %}Добавяне на камера{% endif %}
+            </h1>
+
+            <form method="post">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.name.id_for_label }}">Име</label>
+                    {{ form.name }}
+                    <div class="text-danger small">{{ form.name.errors }}</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.source_type.id_for_label }}">Тип източник</label>
+                    {{ form.source_type }}
+                    <div class="text-danger small">{{ form.source_type.errors }}</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.stream_url.id_for_label }}">Stream URL</label>
+                    {{ form.stream_url }}
+                    <div class="form-text">Използва се при IP камера или външен поток.</div>
+                    <div class="text-danger small">{{ form.stream_url.errors }}</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.device_index.id_for_label }}">Device index</label>
+                    {{ form.device_index }}
+                    <div class="form-text">0 = default webcam.</div>
+                    <div class="text-danger small">{{ form.device_index.errors }}</div>
+                </div>
+
+                <div class="form-check mb-3">
+                    {{ form.is_active }}
+                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Активна</label>
+                    <div class="text-danger small">{{ form.is_active.errors }}</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.sensitivity_threshold.id_for_label }}">Праг на чувствителност</label>
+                    {{ form.sensitivity_threshold }}
+                    <div class="text-danger small">{{ form.sensitivity_threshold.errors }}</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.min_area.id_for_label }}">Минимална площ</label>
+                    {{ form.min_area }}
+                    <div class="text-danger small">{{ form.min_area.errors }}</div>
+                </div>
+
+                <button class="btn btn-primary" type="submit">Запази</button>
+                <a href="{% url 'camera_list' %}" class="btn btn-outline-secondary">Отказ</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
